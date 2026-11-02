@@ -22,3 +22,12 @@ export interface CreateMenuItemDTO {
 }
 
 export type UpdateMenuItemDTO = Partial<CreateMenuItemDTO>;
+
+export interface MenuItemUpdatedPayload {
+  id: number;
+  name: string;
+  price: number;
+  isAvailable: boolean;
+  categoryId?: number;
+  action: 'updated' | 'toggle' | 'deleted';
+}
