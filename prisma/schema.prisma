@@ -116,4 +116,18 @@ model StoreSetting {
   updatedAt     DateTime @updatedAt
 }
 
+model QueueTicket {
+  id            Int       @id @default(autoincrement())
+  ticketNo      Int
+  customerPhone String
+  partySize     Int       @default(2)
+  status        String    @default("WAITING") // WAITING | CALLING | SEATED | CANCELLED | EXPIRED
+  callCount     Int       @default(0)
+  calledAt      DateTime?
+  seatedAt      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+
 

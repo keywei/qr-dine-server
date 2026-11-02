@@ -44,11 +44,21 @@ export const notifyOrderUpdated = (order: { orderNo?: string } & Record<string, 
   if (order.orderNo) {
     io.to(`order_${order.orderNo}`).emit('order:updated', order);
   }
-  io.emit('order:updated', order); // 全域推播，確保客戶端絕對接收到
+  io.emit('order:updated', order);
   io.emit('order:status_changed', order);
 };
 
 export const notifyMenuItemUpdated = (payload: MenuItemUpdatedPayload) => {
   if (!io) return;
   io.emit('menu:item_updated', payload);
+};
+
+export const notifyQueueUpdated = () => {
+  if (!io) return;
+  io.emit('queue:updated');
+};
+
+export const notifyQueueCalled = (ticket: unknown) => {
+  if (!io) return;
+  io.emit('queue:called', ticket);
 };

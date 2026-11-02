@@ -76,5 +76,17 @@ export const MESSAGES = {
   STORE: {
     UPDATED: '門市資訊更新成功',
   },
+
+  // 排隊取號
+  QUEUE: {
+    CREATED: '取號成功',
+    EXISTING: '您今日已有排隊號碼牌',
+    CANCELLED: '已取消排隊',
+    CALLED: '唱號成功',
+    SEATED: '已安排入座',
+    NOT_FOUND: '找不到此排隊票券',
+    INVALID_PHONE: '請輸入正確的 09 開頭 10 碼手機號碼',
+    INVALID_PARTY_SIZE: '用餐人數請介於 1 至 20 人之間',
+  },
 } as const;
 
