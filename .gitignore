@@ -15,6 +15,9 @@ prisma/*.db-journal
 uploads/*
 !uploads/.gitkeep
 
+# Agent rules & local configurations
+.agent/
+
 # Logs
 *.log
 npm-debug.log*
