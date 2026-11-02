@@ -22,35 +22,45 @@ export const createTicket = async (dto: CreateQueueTicketDTO) => {
   });
   if (existing) return { ...existing, isExisting: true };
 
-  const lastTicket = await prisma.queueTicket.findFirst({
+  const last = await prisma.queueTicket.findFirst({
     where: { createdAt: { gte: start, lte: end } },
     orderBy: { ticketNo: 'desc' },
   });
-  const ticketNo = (lastTicket?.ticketNo || 0) + 1;
   const ticket = await prisma.queueTicket.create({
-    data: { ticketNo, customerPhone: phone, partySize: size, status: 'WAITING' },
+    data: { ticketNo: (last?.ticketNo || 0) + 1, customerPhone: phone, partySize: size, status: 'WAITING' },
   });
   notifyQueueUpdated();
   return ticket;
 };
 
-export const getTicketDetail = async (id: number) => {
-  const ticket = await prisma.queueTicket.findUnique({ where: { id } });
-  if (!ticket) throw new AppError(MESSAGES.QUEUE.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
-
+export const getPublicQueueStatus = async () => {
   const { start, end } = getTodayRange();
   const currentCalling = await prisma.queueTicket.findFirst({
     where: { createdAt: { gte: start, lte: end }, status: 'CALLING' },
     orderBy: { calledAt: 'desc' },
   });
+  const waitingCount = await prisma.queueTicket.count({
+    where: { createdAt: { gte: start, lte: end }, status: 'WAITING' },
+  });
+  return { currentCallingNo: currentCalling?.ticketNo || null, waitingCount };
+};
 
+export const getTicketDetail = async (id: number) => {
+  if (isNaN(id) || id <= 0) {
+    throw new AppError(MESSAGES.QUEUE.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
+  }
+  const ticket = await prisma.queueTicket.findUnique({ where: { id } });
+  if (!ticket) throw new AppError(MESSAGES.QUEUE.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
+
+  const { currentCallingNo } = await getPublicQueueStatus();
+  const { start, end } = getTodayRange();
   const waitingCount = ticket.status === 'WAITING'
     ? await prisma.queueTicket.count({
         where: { createdAt: { gte: start, lte: end }, status: 'WAITING', ticketNo: { lt: ticket.ticketNo } },
       })
     : 0;
 
-  return { ...ticket, currentCallingNo: currentCalling?.ticketNo || null, waitingCount, maxCallCount: 3 };
+  return { ...ticket, currentCallingNo, waitingCount, maxCallCount: 3 };
 };
 
 export const getAdminQueue = async () => {
@@ -59,15 +69,13 @@ export const getAdminQueue = async () => {
     where: { createdAt: { gte: start, lte: end } },
     orderBy: { ticketNo: 'asc' },
   });
-
   const waitingCount = tickets.filter((t) => t.status === 'WAITING').length;
   const callingCount = tickets.filter((t) => t.status === 'CALLING').length;
   const seatedCount = tickets.filter((t) => t.status === 'SEATED').length;
-  const callingTickets = tickets.filter((t) => t.status === 'CALLING' && t.calledAt);
-  callingTickets.sort((a, b) => (b.calledAt?.getTime() || 0) - (a.calledAt?.getTime() || 0));
-  const currentCallingNo = callingTickets.length > 0 ? callingTickets[0].ticketNo : null;
+  const calling = tickets.filter((t) => t.status === 'CALLING' && t.calledAt);
+  calling.sort((a, b) => (b.calledAt?.getTime() || 0) - (a.calledAt?.getTime() || 0));
 
-  return { tickets, stats: { waitingCount, callingCount, seatedCount, currentCallingNo } };
+  return { tickets, stats: { waitingCount, callingCount, seatedCount, currentCallingNo: calling[0]?.ticketNo || null } };
 };
 
-export const QueueService = { createTicket, getTicketDetail, getAdminQueue };
+export const QueueService = { createTicket, getPublicQueueStatus, getTicketDetail, getAdminQueue };

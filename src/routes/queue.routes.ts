@@ -4,6 +4,7 @@ import { QueueController } from '../controllers/queue.controller';
 const router = Router();
 
 router.post('/', QueueController.createTicket);
+router.get('/status', QueueController.getPublicQueueStatus);
 router.get('/:id', QueueController.getTicket);
 router.post('/:id/cancel', QueueController.cancelTicket);
 

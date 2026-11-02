@@ -4,7 +4,12 @@ import { MESSAGES } from '../constants/messages';
 import { HttpStatus, ResponseCode } from '../types/api';
 import { notifyQueueUpdated, notifyQueueCalled } from '../socket';
 
+const checkValidId = (id: number) => {
+  if (isNaN(id) || id <= 0) throw new AppError(MESSAGES.QUEUE.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
+};
+
 export const cancelTicket = async (id: number) => {
+  checkValidId(id);
   const ticket = await prisma.queueTicket.findUnique({ where: { id } });
   if (!ticket) throw new AppError(MESSAGES.QUEUE.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
 
@@ -17,10 +22,10 @@ export const cancelTicket = async (id: number) => {
 };
 
 export const callTicket = async (id: number) => {
+  checkValidId(id);
   const ticket = await prisma.queueTicket.findUnique({ where: { id } });
   if (!ticket) throw new AppError(MESSAGES.QUEUE.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
 
-  // 規則：若 callCount >= 3 直接 EXPIRED；若 < 3 則累加並改為 CALLING
   const isExpired = ticket.callCount >= 3;
   const status = isExpired ? 'EXPIRED' : 'CALLING';
 
@@ -39,6 +44,7 @@ export const callTicket = async (id: number) => {
 };
 
 export const seatTicket = async (id: number) => {
+  checkValidId(id);
   const ticket = await prisma.queueTicket.findUnique({ where: { id } });
   if (!ticket) throw new AppError(MESSAGES.QUEUE.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
 
