@@ -17,6 +17,8 @@ export interface CreateOrderDTO {
   tableCode?: string;
   customerNote?: string | null;
   customerPhone?: string | null;
+  taxId?: string | null;
+  invoiceCarrier?: string | null;
   paymentMethod: PaymentMethod;
   items: CreateOrderItemDTO[];
 }

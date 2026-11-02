@@ -7,6 +7,7 @@ import paymentRoutes from './payment.routes';
 import tableRoutes from './table.routes';
 import statsRoutes from './stats.routes';
 import uploadRoutes from './upload.routes';
+import storeRoutes from './store.routes';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/payments', paymentRoutes);
 router.use('/tables', tableRoutes);
 router.use('/stats', statsRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/store', storeRoutes);
 
 export default router;

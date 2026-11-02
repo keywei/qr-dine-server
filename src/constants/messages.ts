@@ -71,5 +71,10 @@ export const MESSAGES = {
     FILE_REQUIRED: '未接收到圖片檔案',
     INVALID_FORMAT: '只允許上傳 JPEG, PNG, WEBP, GIF 格式圖片',
   },
+
+  // 門市設定
+  STORE: {
+    UPDATED: '門市資訊更新成功',
+  },
 } as const;
 

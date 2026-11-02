@@ -77,6 +77,8 @@ model Order {
   table         DiningTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
   customerNote  String?
   customerPhone String?
+  taxId         String? // 統一編號
+  invoiceCarrier String? // 手機條碼載具
   
   // Status: PENDING_PAYMENT, COOKING, COMPLETED, CANCELLED
   status        String       @default("PENDING_PAYMENT")
@@ -103,4 +105,15 @@ model OrderItem {
   quantity    Int      @default(1)
   optionsText String?
 }
+
+model StoreSetting {
+  id            Int      @id @default(1)
+  storeCode     String   @default("STORE-001") // 門市店號
+  name          String   @default("美味食堂 總店") // 門市店名
+  address       String   @default("台北市中正區忠孝東路一段 100 號") // 門市地址
+  phone         String   @default("02-2345-6789") // 電話
+  businessHours String   @default("週一至週日 11:00 - 21:00") // 營業時間
+  updatedAt     DateTime @updatedAt
+}
+
 
