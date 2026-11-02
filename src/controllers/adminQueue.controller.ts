@@ -14,6 +14,11 @@ export const getAdminQueue = asyncHandler(async (_req: Request, res: Response) =
   successResponse(res, data);
 });
 
+export const getAdminQueueStats = asyncHandler(async (_req: Request, res: Response) => {
+  const data = await getAdminQueueService();
+  successResponse(res, data.stats);
+});
+
 export const callTicket = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   const ticket = await callTicketService(id);
@@ -34,6 +39,7 @@ export const cancelTicket = asyncHandler(async (req: Request, res: Response) => 
 
 export const AdminQueueController = {
   getAdminQueue,
+  getAdminQueueStats,
   callTicket,
   seatTicket,
   cancelTicket,

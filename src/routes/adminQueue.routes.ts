@@ -6,6 +6,7 @@ const router = Router();
 
 router.use(authenticateJwt);
 router.get('/', AdminQueueController.getAdminQueue);
+router.get('/stats', AdminQueueController.getAdminQueueStats);
 router.put('/:id/call', AdminQueueController.callTicket);
 router.put('/:id/seat', AdminQueueController.seatTicket);
 router.put('/:id/cancel', AdminQueueController.cancelTicket);

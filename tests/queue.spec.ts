@@ -32,6 +32,18 @@ test.describe('內用排隊取號與唱號狀態 API 測試 (Queue Ticket & Stat
     expect(typeof body.data.waitingCount).toBe('number');
   });
 
+  test('【正向】後台隊列統計查詢 (GET /api/admin/queue/stats)', async ({ request }) => {
+    const res = await request.get('/api/admin/queue/stats', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data).toHaveProperty('waitingCount');
+    expect(body.data).toHaveProperty('callingCount');
+    expect(body.data).toHaveProperty('seatedCount');
+  });
+
   test('【正向】顧客取號、重複取號提示與放棄排隊', async ({ request }) => {
     const phone = `09${Math.floor(10000000 + Math.random() * 90000000)}`;
     const res = await request.post('/api/queue', { data: { customerPhone: phone, partySize: 4 } });
