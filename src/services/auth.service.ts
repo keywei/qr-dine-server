@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import prisma from '../prisma';
 import { AuthUser, LoginDTO } from '../types/auth';
 import { AppError } from '../utils/appError';
+import { MESSAGES } from '../constants/messages';
+import { HttpStatus, ResponseCode } from '../types/api';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-qr-order-jwt-key-2026';
 
@@ -10,12 +12,12 @@ export class AuthService {
   static async login(dto: LoginDTO): Promise<{ token: string; user: AuthUser }> {
     const { username, password } = dto;
     if (!username || !password) {
-      throw new AppError('請輸入帳號與密碼', 1004, 400);
+      throw new AppError(MESSAGES.AUTH.REQUIRED_CREDENTIALS, ResponseCode.AUTH_INVALID_CREDENTIALS, HttpStatus.BAD_REQUEST);
     }
 
     const admin = await prisma.adminUser.findUnique({ where: { username } });
     if (!admin || !(await bcrypt.compare(password, admin.password))) {
-      throw new AppError('帳號或密碼錯誤', 1004, 401);
+      throw new AppError(MESSAGES.AUTH.INVALID_CREDENTIALS, ResponseCode.AUTH_INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED);
     }
 
     const user: AuthUser = {
@@ -36,7 +38,7 @@ export class AuthService {
     });
 
     if (!admin) {
-      throw new AppError('找不到使用者資訊', 1005, 404);
+      throw new AppError(MESSAGES.AUTH.USER_NOT_FOUND, ResponseCode.AUTH_USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     return admin;
   }

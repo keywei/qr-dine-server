@@ -1,5 +1,7 @@
 import prisma from '../prisma';
 import { AppError } from '../utils/appError';
+import { MESSAGES } from '../constants/messages';
+import { HttpStatus, ResponseCode } from '../types/api';
 
 export class CategoryService {
   static async getCategories() {
@@ -11,7 +13,7 @@ export class CategoryService {
 
   static async createCategory(name: string, sortOrder = 0) {
     if (!name?.trim()) {
-      throw new AppError('分類名稱為必填項', 400, 400);
+      throw new AppError(MESSAGES.CATEGORY.NAME_REQUIRED, ResponseCode.BAD_REQUEST, HttpStatus.BAD_REQUEST);
     }
     return prisma.category.create({
       data: { name: name.trim(), sortOrder: Number(sortOrder) || 0 },
@@ -31,7 +33,7 @@ export class CategoryService {
   static async deleteCategory(id: number) {
     const itemCount = await prisma.menuItem.count({ where: { categoryId: id } });
     if (itemCount > 0) {
-      throw new AppError('此分類下仍有餐點，無法直接刪除', 2000, 400);
+      throw new AppError(MESSAGES.CATEGORY.HAS_ITEMS_CANNOT_DELETE, ResponseCode.CATEGORY_HAS_ITEMS, HttpStatus.BAD_REQUEST);
     }
     return prisma.category.delete({ where: { id } });
   }

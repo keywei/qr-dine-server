@@ -2,6 +2,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { AppError } from '../utils/appError';
+import { MESSAGES } from '../constants/messages';
+import { HttpStatus, ResponseCode } from '../types/api';
 
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) {
@@ -21,7 +23,7 @@ const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterC
   if (allowed.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new AppError('只允許上傳 JPEG, PNG, WEBP, GIF 格式圖片', 400, 400));
+    cb(new AppError(MESSAGES.UPLOAD.INVALID_FORMAT, ResponseCode.BAD_REQUEST, HttpStatus.BAD_REQUEST));
   }
 };
 

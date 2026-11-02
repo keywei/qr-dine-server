@@ -2,6 +2,8 @@ import prisma from '../prisma';
 import { CreateTableDTO, UpdateTableDTO } from '../types/table';
 import { AppError } from '../utils/appError';
 import { generateQrDataUrl } from '../utils/qr';
+import { MESSAGES } from '../constants/messages';
+import { HttpStatus, ResponseCode } from '../types/api';
 
 export class TableService {
   static async getTables() {
@@ -9,9 +11,13 @@ export class TableService {
   }
 
   static async createTable(dto: CreateTableDTO) {
-    if (!dto.code || !dto.name) throw new AppError('請填寫桌號代碼與名稱', 400, 400);
+    if (!dto.code || !dto.name) {
+      throw new AppError(MESSAGES.TABLE.REQUIRED_FIELDS, ResponseCode.BAD_REQUEST, HttpStatus.BAD_REQUEST);
+    }
     const existing = await prisma.diningTable.findUnique({ where: { code: dto.code } });
-    if (existing) throw new AppError(`桌號 ${dto.code} 已存在`, 409, 409);
+    if (existing) {
+      throw new AppError(MESSAGES.TABLE.ALREADY_EXISTS(dto.code), ResponseCode.CONFLICT, HttpStatus.CONFLICT);
+    }
 
     return prisma.diningTable.create({
       data: { code: dto.code.trim(), name: dto.name.trim(), capacity: Number(dto.capacity || 4) },
@@ -36,7 +42,7 @@ export class TableService {
 
   static async getTableQr(code: string, baseUrl: string) {
     const table = await prisma.diningTable.findUnique({ where: { code } });
-    if (!table) throw new AppError('找不到此桌號', 404, 404);
+    if (!table) throw new AppError(MESSAGES.TABLE.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
 
     const orderUrl = `${baseUrl}/order?tableId=${encodeURIComponent(table.code)}&diningType=dine_in`;
     const qrCode = await generateQrDataUrl(orderUrl);
@@ -46,7 +52,7 @@ export class TableService {
   static async getTakeoutQr(baseUrl: string) {
     const orderUrl = `${baseUrl}/order?diningType=takeout`;
     const qrCode = await generateQrDataUrl(orderUrl, '#0369a1');
-    return { type: 'takeout', name: '外帶點餐 QR Code', orderUrl, qrCode };
+    return { type: 'takeout', name: MESSAGES.TABLE.TAKEOUT_NAME, orderUrl, qrCode };
   }
 
   static async getBatchQrs(baseUrl: string) {
@@ -59,16 +65,11 @@ export class TableService {
       tables.map(async (t) => {
         const orderUrl = `${baseUrl}/order?tableId=${encodeURIComponent(t.code)}&diningType=dine_in`;
         const qrCode = await generateQrDataUrl(orderUrl);
-        return { id: t.id, code: t.code, name: t.name, capacity: t.capacity, orderUrl, qrCode };
+        return { code: t.code, name: t.name, orderUrl, qrCode };
       })
     );
 
-    const takeoutUrl = `${baseUrl}/order?diningType=takeout`;
-    const takeoutQR = await generateQrDataUrl(takeoutUrl, '#0369a1');
-
-    return {
-      tables: tableQrs,
-      takeout: { name: '門市外帶專屬 QR Code', orderUrl: takeoutUrl, qrCode: takeoutQR },
-    };
+    const takeoutQr = await this.getTakeoutQr(baseUrl);
+    return { tables: tableQrs, takeout: takeoutQr };
   }
 }

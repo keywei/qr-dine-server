@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { TableService } from '../services/table.service';
 import { successResponse } from '../utils/response';
 import { asyncHandler } from '../utils/asyncHandler';
+import { MESSAGES } from '../constants/messages';
+import { HttpStatus, ResponseCode } from '../types/api';
 
 const getBaseUrl = (req: Request): string => {
   if (process.env.CLIENT_URL) return process.env.CLIENT_URL;
@@ -17,19 +19,19 @@ export class TableController {
 
   static createTable = asyncHandler(async (req: Request, res: Response) => {
     const data = await TableService.createTable(req.body);
-    successResponse(res, data, '桌號新增成功', 0, 201);
+    successResponse(res, data, MESSAGES.TABLE.CREATED, ResponseCode.CREATED, HttpStatus.CREATED);
   });
 
   static updateTable = asyncHandler(async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     const data = await TableService.updateTable(id, req.body);
-    successResponse(res, data, '桌號更新成功');
+    successResponse(res, data, MESSAGES.TABLE.UPDATED);
   });
 
   static deleteTable = asyncHandler(async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     await TableService.deleteTable(id);
-    successResponse(res, null, '桌號已刪除');
+    successResponse(res, null, MESSAGES.TABLE.DELETED);
   });
 
   static getTableQr = asyncHandler(async (req: Request, res: Response) => {

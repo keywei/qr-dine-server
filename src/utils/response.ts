@@ -1,12 +1,13 @@
 import { Response } from 'express';
-import { ApiResponse } from '../types/api';
+import { ApiResponse, HttpStatus, ResponseCode } from '../types/api';
+import { MESSAGES } from '../constants/messages';
 
 export const successResponse = <T>(
   res: Response,
   data: T,
-  message = '操作成功',
-  code = 0,
-  statusCode = 200
+  message: string = MESSAGES.SUCCESS,
+  code: ResponseCode = ResponseCode.SUCCESS,
+  statusCode: HttpStatus = HttpStatus.OK
 ): Response<ApiResponse<T>> => {
   return res.status(statusCode).json({
     success: true,
@@ -18,9 +19,9 @@ export const successResponse = <T>(
 
 export const errorResponse = (
   res: Response,
-  message = '操作失敗',
-  code = 400,
-  statusCode = 400
+  message: string = MESSAGES.FAILED,
+  code: ResponseCode = ResponseCode.BAD_REQUEST,
+  statusCode: HttpStatus = HttpStatus.BAD_REQUEST
 ): Response<ApiResponse<null>> => {
   return res.status(statusCode).json({
     success: false,

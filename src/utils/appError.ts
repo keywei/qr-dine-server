@@ -1,8 +1,14 @@
-export class AppError extends Error {
-  public readonly statusCode: number;
-  public readonly code: number;
+import { HttpStatus, ResponseCode } from '../types/api';
 
-  constructor(message: string, code = 400, statusCode = 400) {
+export class AppError extends Error {
+  public readonly statusCode: HttpStatus;
+  public readonly code: ResponseCode;
+
+  constructor(
+    message: string,
+    code: ResponseCode = ResponseCode.BAD_REQUEST,
+    statusCode: HttpStatus = HttpStatus.BAD_REQUEST
+  ) {
     super(message);
     this.name = 'AppError';
     this.statusCode = statusCode;

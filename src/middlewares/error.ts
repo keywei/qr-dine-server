@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/appError';
 import { errorResponse } from '../utils/response';
+import { MESSAGES } from '../constants/messages';
+import { HttpStatus, ResponseCode } from '../types/api';
 
 export const errorHandler = (
   err: Error | AppError,
@@ -14,5 +16,10 @@ export const errorHandler = (
   }
 
   console.error('[Unhandled Error]:', err);
-  errorResponse(res, err.message || '伺服器內部發生錯誤，工程師搶修中', 500, 500);
+  errorResponse(
+    res,
+    err.message || MESSAGES.INTERNAL_ERROR,
+    ResponseCode.INTERNAL_ERROR,
+    HttpStatus.INTERNAL_SERVER_ERROR
+  );
 };

@@ -1,6 +1,8 @@
 import prisma from '../prisma';
 import { CreateMenuItemDTO, UpdateMenuItemDTO } from '../types/menu';
 import { AppError } from '../utils/appError';
+import { MESSAGES } from '../constants/messages';
+import { HttpStatus, ResponseCode } from '../types/api';
 
 const mapOptionGroups = (groups?: CreateMenuItemDTO['options']) =>
   groups?.map((g) => ({
@@ -41,13 +43,13 @@ export class MenuItemService {
       where: { id },
       include: { category: true, options: { include: { options: true } } },
     });
-    if (!item) throw new AppError('找不到此餐點', 404, 404);
+    if (!item) throw new AppError(MESSAGES.MENU.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
     return item;
   }
 
   static async createMenuItem(dto: CreateMenuItemDTO) {
     if (!dto.name || !dto.categoryId || dto.price === undefined) {
-      throw new AppError('分類、餐點品名與價格為必填項', 2008, 400);
+      throw new AppError(MESSAGES.MENU.INVALID_PARAMS, ResponseCode.MENU_ITEM_INVALID_PARAMS, HttpStatus.BAD_REQUEST);
     }
     const createOptions = mapOptionGroups(dto.options);
     return prisma.menuItem.create({
@@ -88,11 +90,8 @@ export class MenuItemService {
 
   static async toggleAvailability(id: number) {
     const item = await prisma.menuItem.findUnique({ where: { id } });
-    if (!item) throw new AppError('找不到此餐點', 404, 404);
-    return prisma.menuItem.update({
-      where: { id },
-      data: { isAvailable: !item.isAvailable },
-    });
+    if (!item) throw new AppError(MESSAGES.MENU.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
+    return prisma.menuItem.update({ where: { id }, data: { isAvailable: !item.isAvailable } });
   }
 
   static async deleteMenuItem(id: number) {

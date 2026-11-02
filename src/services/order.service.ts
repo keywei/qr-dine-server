@@ -2,6 +2,8 @@ import prisma from '../prisma';
 import { CreateOrderDTO, OrderFilterQuery } from '../types/order';
 import { AppError } from '../utils/appError';
 import { notifyNewOrder } from '../socket';
+import { MESSAGES } from '../constants/messages';
+import { HttpStatus, ResponseCode } from '../types/api';
 
 const generateOrderNo = () => {
   const d = new Date();
@@ -11,16 +13,22 @@ const generateOrderNo = () => {
 
 export class OrderService {
   static async createOrder(dto: CreateOrderDTO) {
-    if (!dto.items?.length) throw new AppError('購物車餐點明細為空，無法送出訂單', 2003, 400);
+    if (!dto.items?.length) {
+      throw new AppError(MESSAGES.ORDER.CART_EMPTY, ResponseCode.ORDER_CART_EMPTY, HttpStatus.BAD_REQUEST);
+    }
 
     let tableId: number | null = null;
     if (dto.diningType === 'DINE_IN') {
-      if (!dto.tableCode) throw new AppError('內用點餐請提供桌號代碼', 2002, 400);
+      if (!dto.tableCode) {
+        throw new AppError(MESSAGES.ORDER.DINE_IN_TABLE_REQUIRED, ResponseCode.TABLE_NOT_FOUND, HttpStatus.BAD_REQUEST);
+      }
       const table = await prisma.diningTable.findUnique({ where: { code: dto.tableCode } });
-      if (!table) throw new AppError(`桌號不存在: ${dto.tableCode}`, 2002, 404);
+      if (!table) {
+        throw new AppError(MESSAGES.ORDER.TABLE_NOT_FOUND(dto.tableCode), ResponseCode.TABLE_NOT_FOUND, HttpStatus.NOT_FOUND);
+      }
       tableId = table.id;
     } else if (!dto.customerPhone?.trim()) {
-      throw new AppError('外帶顧客請務必提供聯絡電話', 2006, 400);
+      throw new AppError(MESSAGES.ORDER.TAKEOUT_PHONE_REQUIRED, ResponseCode.ORDER_TAKEOUT_PHONE_REQUIRED, HttpStatus.BAD_REQUEST);
     }
 
     let totalAmount = 0;
@@ -82,7 +90,7 @@ export class OrderService {
       where: { orderNo },
       include: { table: true, items: true },
     });
-    if (!order) throw new AppError('找不到此訂單', 404, 404);
+    if (!order) throw new AppError(MESSAGES.ORDER.NOT_FOUND, ResponseCode.NOT_FOUND, HttpStatus.NOT_FOUND);
     return order;
   }
 }

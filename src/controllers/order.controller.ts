@@ -3,11 +3,13 @@ import { OrderService } from '../services/order.service';
 import { OrderStateService } from '../services/orderState.service';
 import { successResponse } from '../utils/response';
 import { asyncHandler } from '../utils/asyncHandler';
+import { MESSAGES } from '../constants/messages';
+import { HttpStatus, ResponseCode } from '../types/api';
 
 export class OrderController {
   static createOrder = asyncHandler(async (req: Request, res: Response) => {
     const order = await OrderService.createOrder(req.body);
-    successResponse(res, order, '訂單已建立', 0, 201);
+    successResponse(res, order, MESSAGES.ORDER.CREATED, ResponseCode.CREATED, HttpStatus.CREATED);
   });
 
   static getOrders = asyncHandler(async (req: Request, res: Response) => {
@@ -24,12 +26,12 @@ export class OrderController {
   static confirmCashPayment = asyncHandler(async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     const order = await OrderStateService.confirmCashPayment(id);
-    successResponse(res, order, '已確認收款，訂單轉入製作中');
+    successResponse(res, order, MESSAGES.ORDER.CASH_PAYMENT_CONFIRMED);
   });
 
   static updateOrderStatus = asyncHandler(async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     const order = await OrderStateService.updateOrderStatus(id, req.body.status);
-    successResponse(res, order, `訂單狀態已更新為: ${order.status}`);
+    successResponse(res, order, MESSAGES.ORDER.STATUS_UPDATED(order.status));
   });
 }
