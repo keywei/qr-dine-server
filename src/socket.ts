@@ -44,6 +44,7 @@ export const notifyOrderUpdated = (order: { orderNo?: string } & Record<string, 
   if (order.orderNo) {
     io.to(`order_${order.orderNo}`).emit('order:updated', order);
   }
+  io.emit('order:updated', order); // 全域推播，確保客戶端絕對接收到
   io.emit('order:status_changed', order);
 };
 
