@@ -24,7 +24,7 @@ export const getMenuItemById = asyncHandler(async (req: Request, res: Response) 
 
 export const createMenuItem = asyncHandler(async (req: Request, res: Response) => {
   const data = await MenuItemService.createMenuItem(req.body);
-  successResponse(res, data, MESSAGES.MENU.CREATED, ResponseCode.CREATED, HttpStatus.CREATED);
+  successResponse(res, data, MESSAGES.MENU.CREATED, ResponseCode.SUCCESS, HttpStatus.CREATED);
 });
 
 export const updateMenuItem = asyncHandler(async (req: Request, res: Response) => {

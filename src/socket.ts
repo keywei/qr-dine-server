@@ -53,6 +53,11 @@ export const notifyMenuItemUpdated = (payload: MenuItemUpdatedPayload) => {
   io.emit('menu:item_updated', payload);
 };
 
+export const notifyCategoryUpdated = () => {
+  if (!io) return;
+  io.emit('category:updated');
+};
+
 export const notifyQueueUpdated = () => {
   if (!io) return;
   io.emit('queue:updated');

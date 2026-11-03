@@ -19,7 +19,7 @@ export class TableController {
 
   static createTable = asyncHandler(async (req: Request, res: Response) => {
     const data = await TableService.createTable(req.body);
-    successResponse(res, data, MESSAGES.TABLE.CREATED, ResponseCode.CREATED, HttpStatus.CREATED);
+    successResponse(res, data, MESSAGES.TABLE.CREATED, ResponseCode.SUCCESS, HttpStatus.CREATED);
   });
 
   static updateTable = asyncHandler(async (req: Request, res: Response) => {
