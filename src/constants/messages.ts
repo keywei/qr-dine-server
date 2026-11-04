@@ -88,5 +88,18 @@ export const MESSAGES = {
     INVALID_PHONE: '請輸入正確的 09 開頭 10 碼手機號碼',
     INVALID_PARTY_SIZE: '用餐人數請介於 1 至 20 人之間',
   },
+
+  // 服務鈴
+  SERVICE_BELL: {
+    CALLED: '服務鈴呼叫已送出，服務人員將盡速前往',
+    COMPLETED: '服務呼叫已標記為處理完成',
+    GLOBAL_DISABLED: '全店服務鈴功能目前關閉中',
+    TABLE_DISABLED: '本科位服務鈴目前關閉中',
+    COOLDOWN: (sec: number) => `呼叫過於頻繁，請於 ${sec} 秒後再試`,
+    NOT_FOUND: '找不到此服務呼叫記錄',
+    TABLE_REQUIRED: '請提供有效的桌號代碼',
+    TYPE_REQUIRED: '請選擇服務需求項目',
+    UPDATED: '服務鈴設定更新成功',
+  },
 } as const;
 

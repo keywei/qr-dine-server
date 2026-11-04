@@ -18,13 +18,15 @@ model AdminUser {
 }
 
 model DiningTable {
-  id        Int      @id @default(autoincrement())
-  code      String   @unique
-  name      String
-  capacity  Int      @default(4)
-  isActive  Boolean  @default(true)
-  orders    Order[]
-  createdAt DateTime @default(now())
+  id                 Int           @id @default(autoincrement())
+  code               String        @unique
+  name               String
+  capacity           Int           @default(4)
+  isActive           Boolean       @default(true)
+  serviceBellEnabled Boolean       @default(true)
+  orders             Order[]
+  serviceCalls       ServiceCall[]
+  createdAt          DateTime      @default(now())
 }
 
 model Category {
@@ -107,13 +109,25 @@ model OrderItem {
 }
 
 model StoreSetting {
-  id            Int      @id @default(1)
-  storeCode     String   @default("STORE-001") // 門市店號
-  name          String   @default("美味食堂 總店") // 門市店名
-  address       String   @default("台北市中正區忠孝東路一段 100 號") // 門市地址
-  phone         String   @default("02-2345-6789") // 電話
-  businessHours String   @default("週一至週日 11:00 - 21:00") // 營業時間
-  updatedAt     DateTime @updatedAt
+  id                 Int      @id @default(1)
+  storeCode          String   @default("STORE-001") // 門市店號
+  name               String   @default("美味食堂 總店") // 門市店名
+  address            String   @default("台北市中正區忠孝東路一段 100 號") // 門市地址
+  phone              String   @default("02-2345-6789") // 電話
+  businessHours      String   @default("週一至週日 11:00 - 21:00") // 營業時間
+  serviceBellEnabled Boolean  @default(true) // 全店服務鈴總開關
+  updatedAt          DateTime @updatedAt
+}
+
+model ServiceCall {
+  id        Int          @id @default(autoincrement())
+  tableId   Int
+  table     DiningTable  @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  type      String       // WATER (加水), UTENSILS (餐具), CLEAN (清潔), ASSIST (現場協助), OTHER (其他)
+  note      String?
+  status    String       @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 }
 
 model QueueTicket {

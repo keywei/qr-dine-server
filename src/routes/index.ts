@@ -10,6 +10,7 @@ import uploadRoutes from './upload.routes';
 import storeRoutes from './store.routes';
 import queueRoutes from './queue.routes';
 import adminQueueRoutes from './adminQueue.routes';
+import serviceBellRoutes from './serviceBell.routes';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/upload', uploadRoutes);
 router.use('/store', storeRoutes);
 router.use('/queue', queueRoutes);
 router.use('/admin/queue', adminQueueRoutes);
+router.use('/service-bell', serviceBellRoutes);
 
 export default router;
