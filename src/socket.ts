@@ -13,6 +13,11 @@ export const initSocket = (httpServer: HttpServer) => {
   });
 
   io.on('connection', (socket: Socket) => {
+    socket.on('error', (err: any) => {
+      if (err?.code === 'ECONNRESET') return;
+      console.error('[Socket Error]:', err);
+    });
+
     socket.on('join', (room: string) => {
       socket.join(room);
     });

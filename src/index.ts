@@ -31,6 +31,11 @@ app.get('/health', (_req: Request, res: Response) => {
 
 app.use(errorHandler);
 
+server.on('clientError', (err: any, socket) => {
+  if (err.code === 'ECONNRESET' || !socket.writable) return;
+  socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+});
+
 server.listen(PORT, () => {
   console.log(`===============================================`);
   console.log(`🚀 QR Code Order Server is running on http://localhost:${PORT}`);
