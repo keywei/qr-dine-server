@@ -10,6 +10,10 @@ export const initSocket = (httpServer: HttpServer) => {
       origin: '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
     },
+    connectionStateRecovery: {
+      maxDisconnectionDuration: 2 * 60 * 1000,
+      skipMiddlewares: true,
+    },
   });
 
   io.on('connection', (socket: Socket) => {
@@ -20,6 +24,12 @@ export const initSocket = (httpServer: HttpServer) => {
 
     socket.on('join', (room: string) => {
       socket.join(room);
+    });
+
+    socket.on('batch_join', (rooms: string[]) => {
+      if (Array.isArray(rooms)) {
+        rooms.forEach((r) => typeof r === 'string' && socket.join(r));
+      }
     });
 
     socket.on('leave', (room: string) => {
