@@ -1,0 +1,9 @@
+node_modules/
+dist/
+prisma/*.db
+prisma/*.db-journal
+uploads/
+test-results/
+playwright-report/
+*.log
+

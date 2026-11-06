@@ -22,14 +22,10 @@ export const initSocket = (httpServer: HttpServer) => {
       console.error('[Socket Error]:', err);
     });
 
-    socket.on('join', (room: string) => {
-      socket.join(room);
-    });
-
-    socket.on('batch_join', (rooms: string[]) => {
-      if (Array.isArray(rooms)) {
-        rooms.forEach((r) => typeof r === 'string' && socket.join(r));
-      }
+    socket.on('join', (rooms: string | string[]) => {
+      const list = Array.isArray(rooms) ? rooms : [rooms];
+      const valid = list.filter((r): r is string => typeof r === 'string' && r.trim().length > 0);
+      if (valid.length > 0) socket.join(valid);
     });
 
     socket.on('leave', (room: string) => {
@@ -40,45 +36,29 @@ export const initSocket = (httpServer: HttpServer) => {
   return io;
 };
 
-export const getIO = (): Server => {
-  if (!io) {
-    throw new Error('Socket.io has not been initialized!');
-  }
-  return io;
-};
+export const getIO = (): Server | null => io;
 
 export const notifyNewOrder = (order: unknown) => {
-  if (!io) return;
-  io.to('admin').emit('order:new', order);
-  io.emit('order:created', order);
+  io?.to('admin').emit('order:new', order);
 };
 
 export const notifyOrderUpdated = (order: { orderNo?: string } & Record<string, unknown>) => {
-  if (!io) return;
-  io.to('admin').emit('order:updated', order);
-  if (order.orderNo) {
-    io.to(`order_${order.orderNo}`).emit('order:updated', order);
-  }
-  io.emit('order:updated', order);
-  io.emit('order:status_changed', order);
+  const rooms = order.orderNo ? ['admin', `order_${order.orderNo}`] : 'admin';
+  io?.to(rooms).emit('order:updated', order);
 };
 
 export const notifyMenuItemUpdated = (payload: MenuItemUpdatedPayload) => {
-  if (!io) return;
-  io.emit('menu:item_updated', payload);
+  io?.emit('menu:item_updated', payload);
 };
 
 export const notifyCategoryUpdated = () => {
-  if (!io) return;
-  io.emit('category:updated');
+  io?.emit('category:updated');
 };
 
 export const notifyQueueUpdated = () => {
-  if (!io) return;
-  io.emit('queue:updated');
+  io?.emit('queue:updated');
 };
 
 export const notifyQueueCalled = (ticket: unknown) => {
-  if (!io) return;
-  io.emit('queue:called', ticket);
+  io?.emit('queue:called', ticket);
 };
