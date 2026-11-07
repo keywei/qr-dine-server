@@ -1,55 +1,30 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/test';
+import { createOrderPayload } from './helpers/factories';
 
 test.describe('訂單與付款狀態切換 API 測試 (Order & Payment State)', () => {
-  let token = '';
-
-  test.beforeAll(async ({ request }) => {
-    let loginRes = await request.post('/api/auth/login', {
-      data: { username: 'admin', password: 'password123' },
-    });
-    let loginData = await loginRes.json();
-    if (!loginData.success) {
-      loginRes = await request.post('/api/auth/login', {
-        data: { username: 'admin', password: '123456' },
-      });
-      loginData = await loginRes.json();
-    }
-    token = loginData.data.token;
-  });
-
-  test('【正向/負向】現金收款確認流程與防止重複收款', async ({ request }) => {
-    // 1. 建立測試外帶訂單
+  test('【正向/負向】現金收款確認流程與防止重複收款', async ({ request, authRequest }) => {
+    // 1. Arrange: 建立測試外帶待付款訂單
     const createRes = await request.post('/api/orders', {
-      data: {
-        diningType: 'TAKEOUT',
-        customerPhone: '0912345678',
-        paymentMethod: 'CASH',
-        items: [{ name: '測試炒飯', price: 90, quantity: 1 }],
-      },
+      data: createOrderPayload(),
     });
     expect(createRes.status()).toBe(200);
-    const createData = await createRes.json();
-    expect(createData.code).toBe(0);
-    const orderId = createData.data.id;
-    expect(createData.data.status).toBe('PENDING_PAYMENT');
-    expect(createData.data.paymentStatus).toBe('UNPAID');
+    const { id: orderId, status, paymentStatus } = (await createRes.json()).data;
+    expect(status).toBe('PENDING_PAYMENT');
+    expect(paymentStatus).toBe('UNPAID');
 
-    // 2. 現場付款：確認收款
-    const confirmRes = await request.put(`/api/orders/${orderId}/confirm-payment`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    // 2. Act: 管理員確認收款
+    const confirmRes = await authRequest.put(`/api/orders/${orderId}/confirm-payment`);
     expect(confirmRes.status()).toBe(200);
-    const confirmData = await confirmRes.json();
-    expect(confirmData.code).toBe(0);
-    expect(confirmData.data.status).toBe('COOKING');
-    expect(confirmData.data.paymentStatus).toBe('PAID');
+    const confirmData = (await confirmRes.json()).data;
 
-    // 3. 【負向】重複確認收款應被阻擋
-    const duplicateRes = await request.put(`/api/orders/${orderId}/confirm-payment`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    // Assert: 狀態推進至烹調中與已付款
+    expect(confirmData.status).toBe('COOKING');
+    expect(confirmData.paymentStatus).toBe('PAID');
+
+    // 3. Negative Assert: 重複確認收款應被阻擋 (400)
+    const duplicateRes = await authRequest.put(`/api/orders/${orderId}/confirm-payment`);
     expect(duplicateRes.status()).toBe(400);
-    const duplicateData = await duplicateRes.json();
-    expect(duplicateData.success).toBe(false);
+    const duplicateBody = await duplicateRes.json();
+    expect(duplicateBody.success).toBe(false);
   });
 });

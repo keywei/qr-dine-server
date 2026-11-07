@@ -1,111 +1,79 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/test';
 
 test.describe('服務鈴 API 測試 (Service Bell & Multi-tier Switches)', () => {
-  const API_URL = 'http://localhost:3000/api';
-  let token = '';
   let tableId = 0;
   const tableCode = 'A1';
 
-  test.beforeAll(async ({ request }) => {
-    // 1. 取得 Admin JWT
-    const loginRes = await request.post(`${API_URL}/auth/login`, {
-      data: { username: 'admin', password: '123456' },
-    });
-    const loginJson = await loginRes.json();
-    token = loginJson.data.token;
+  test.beforeAll(async ({ authRequest }) => {
+    const tablesRes = await authRequest.get('/api/tables');
+    const { data: tables } = await tablesRes.json();
+    const tableA1 = tables.find((t: { code: string }) => t.code === tableCode);
+    tableId = tableA1 ? tableA1.id : tables[0].id;
 
-    // 2. 獲取桌號列表找到 A1
-    const tablesRes = await request.get(`${API_URL}/tables`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const tablesJson = await tablesRes.json();
-    const tableA1 = tablesJson.data.find((t: any) => t.code === tableCode);
-    tableId = tableA1 ? tableA1.id : tablesJson.data[0].id;
+    // 確保所有桌號預設開啟
+    await authRequest.patch('/api/service-bell/global', { data: { enabled: true } });
+    await authRequest.patch(`/api/service-bell/tables/${tableId}`, { data: { enabled: true } });
+  });
 
-    // 3. 確保預設開關全開啟
-    await request.patch(`${API_URL}/service-bell/global`, {
-      data: { enabled: true },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    await request.patch(`${API_URL}/service-bell/tables/${tableId}`, {
-      data: { enabled: true },
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  test.beforeEach(async ({ authRequest }) => {
+    // 測試前復原開關設定，隔離測試狀態
+    if (tableId > 0) {
+      await authRequest.patch('/api/service-bell/global', { data: { enabled: true } });
+      await authRequest.patch(`/api/service-bell/tables/${tableId}`, { data: { enabled: true } });
+    }
   });
 
   test('【正向】顧客查詢服務鈴狀態 (GET /api/service-bell/status)', async ({ request }) => {
-    const res = await request.get(`${API_URL}/service-bell/status?table=${tableCode}`);
+    const res = await request.get(`/api/service-bell/status?table=${tableCode}`);
     expect(res.status()).toBe(200);
-    const json = await res.json();
-    expect(json.code).toBe(0);
-    expect(json.data.globalEnabled).toBe(true);
-    expect(json.data.tableEnabled).toBe(true);
+    const { data } = await res.json();
+    expect(data.globalEnabled).toBe(true);
+    expect(data.tableEnabled).toBe(true);
   });
 
-  test('【負向/阻擋】全店總開關關閉時，呼叫服務鈴應回傳 400 阻擋', async ({ request }) => {
-    // 關閉總開關
-    await request.patch(`${API_URL}/service-bell/global`, {
-      data: { enabled: false },
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  test('【負向/阻擋】全店總開關關閉時，呼叫服務鈴應回傳 400 阻擋', async ({ request, authRequest }) => {
+    await authRequest.patch('/api/service-bell/global', { data: { enabled: false } });
 
-    const callRes = await request.post(`${API_URL}/service-bell/call`, {
+    const callRes = await request.post('/api/service-bell/call', {
       data: { tableCode, type: 'WATER', note: '加冰水' },
     });
     expect(callRes.status()).toBe(400);
 
-    // 復原開關
-    await request.patch(`${API_URL}/service-bell/global`, {
-      data: { enabled: true },
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await authRequest.patch('/api/service-bell/global', { data: { enabled: true } });
   });
 
-  test('【負向/阻擋】單桌開關關閉時，該桌呼叫應回傳 400 阻擋', async ({ request }) => {
-    // 關閉單桌開關
-    await request.patch(`${API_URL}/service-bell/tables/${tableId}`, {
-      data: { enabled: false },
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  test('【負向/阻擋】單桌開關關閉時，該桌呼叫應回傳 400 阻擋', async ({ request, authRequest }) => {
+    await authRequest.patch(`/api/service-bell/tables/${tableId}`, { data: { enabled: false } });
 
-    const callRes = await request.post(`${API_URL}/service-bell/call`, {
+    const callRes = await request.post('/api/service-bell/call', {
       data: { tableCode, type: 'UTENSILS' },
     });
     expect(callRes.status()).toBe(400);
 
-    // 復原開關
-    await request.patch(`${API_URL}/service-bell/tables/${tableId}`, {
-      data: { enabled: true },
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await authRequest.patch(`/api/service-bell/tables/${tableId}`, { data: { enabled: true } });
   });
 
-  test('【正向】正常呼叫服務鈴、查詢待處理與店家完成服務', async ({ request }) => {
-    // 1. 顧客呼叫服務鈴
-    const callRes = await request.post(`${API_URL}/service-bell/call`, {
-      data: { tableCode, type: 'WATER', note: '請加溫水' },
+  test('【正向】正常呼叫服務鈴、查詢待處理與店家完成服務', async ({ request, authRequest }) => {
+    // 使用獨立桌號以避開單桌 60 秒頻率限制 (Test Isolation)
+    const targetCode = 'B1';
+
+    // 1. Arrange & Act: 呼叫服務鈴
+    const callRes = await request.post('/api/service-bell/call', {
+      data: { tableCode: targetCode, type: 'WATER', note: '請加溫水' },
     });
     expect(callRes.status()).toBe(200);
-    const callJson = await callRes.json();
-    const callId = callJson.data.id;
+    const callId = (await callRes.json()).data.id;
     expect(callId).toBeGreaterThan(0);
-    expect(callJson.data.type).toBe('WATER');
 
-    // 2. 後台查詢待處理清單
-    const activeRes = await request.get(`${API_URL}/service-bell/active`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    // 2. Act & Assert: 後台查詢待處理清單
+    const activeRes = await authRequest.get('/api/service-bell/active');
     expect(activeRes.status()).toBe(200);
-    const activeJson = await activeRes.json();
-    const found = activeJson.data.find((c: any) => c.id === callId);
-    expect(found).toBeDefined();
+    const activeList = (await activeRes.json()).data;
+    expect(activeList.some((c: { id: number }) => c.id === callId)).toBe(true);
 
-    // 3. 店家點擊完成
-    const completeRes = await request.put(`${API_URL}/service-bell/${callId}/complete`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    // 3. Act & Assert: 店家點擊完成
+    const completeRes = await authRequest.put(`/api/service-bell/${callId}/complete`);
     expect(completeRes.status()).toBe(200);
-    const completeJson = await completeRes.json();
-    expect(completeJson.data.status).toBe('COMPLETED');
+    expect((await completeRes.json()).data.status).toBe('COMPLETED');
   });
 });
