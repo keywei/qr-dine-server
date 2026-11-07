@@ -45,7 +45,15 @@ export const getTableQr = async (code: string, baseUrl: string) => {
 
   const orderUrl = `${baseUrl}/order?tableId=${encodeURIComponent(table.code)}&diningType=DINE_IN`;
   const qrCode = await generateQrDataUrl(orderUrl);
-  return { code: table.code, name: table.name, orderUrl, qrCode };
+  return {
+    id: table.id,
+    code: table.code,
+    name: table.name,
+    capacity: table.capacity,
+    serviceBellEnabled: table.serviceBellEnabled,
+    orderUrl,
+    qrCode,
+  };
 };
 
 export const getTakeoutQr = async (baseUrl: string) => {
@@ -64,8 +72,16 @@ export const getBatchQrs = async (baseUrl: string) => {
     tables.map(async (t) => {
       const orderUrl = `${baseUrl}/order?tableId=${encodeURIComponent(t.code)}&diningType=DINE_IN`;
       const qrCode = await generateQrDataUrl(orderUrl);
-      return { code: t.code, name: t.name, orderUrl, qrCode };
-    })
+      return {
+        id: t.id,
+        code: t.code,
+        name: t.name,
+        capacity: t.capacity,
+        serviceBellEnabled: t.serviceBellEnabled,
+        orderUrl,
+        qrCode,
+      };
+    }),
   );
 
   const takeoutQr = await getTakeoutQr(baseUrl);
